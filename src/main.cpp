@@ -1,108 +1,153 @@
-
 #include <Arduino.h>
 #include "CRSFforArduino.hpp"
-#define USE_SERIAL_PLOTTER 0
 
 #define LEDPIN PC13
 
-CRSFforArduino *crsf = nullptr;
+CRSFforArduino crsf; // Declare crsf as a regular object
 
-int rcChannelCount = 12;
-const char *rcChannelNames[] = {
-    "C1x",
-    "C1y",
-    "C2y",
-    "C2x",
-    "Aux1",
-    "Aux2",
-    "Aux3",
-    "Aux4",
-    "Aux5",
-    "Aux6",
-    "Aux7",
-    "Aux8",
-    "Aux9"
-    };
+const int rcChannelCount = 12;
+
+// Array of function pointers for handling channel-specific behavior
+void (*channelHandlers[rcChannelCount])(int value);
+
+// Function declarations
+void handleChannel1(int value);
+void handleChannel2(int value);
+void handleChannel3(int value);
+void handleChannel4(int value);
+void handleChannel5(int value);
+void handleChannel6(int value);
+void handleChannel7(int value);
+void handleChannel8(int value);
+void handleChannel9(int value);
+void handleChannel10(int value);
+void handleChannel11(int value);
+void handleChannel12(int value);
+
+// Default handler for unhandled channels
+void defaultHandler(int value);
 
 void onReceiveRcChannels(serialReceiverLayer::rcChannels_t *rcChannels);
 
 void setup()
 {
   pinMode(LEDPIN, OUTPUT);
-  // Initialise the serial port & wait for the port to open.
-  Serial.begin(115200);
-  while (!Serial)
+
+  // Initialise CRSF for Arduino
+  if (!crsf.begin())
   {
-      ;
+    while (1)
+    {
+      delay(10); // Infinite loop if initialization fails
+    }
   }
 
-  // Initialise CRSF for Arduino.
-  crsf = new CRSFforArduino();
-  if (!crsf->begin())
+  crsf.setRcChannelsCallback(onReceiveRcChannels);
+
+  // Initialize channel handlers
+  for (int i = 0; i < rcChannelCount; i++)
   {
-      crsf->end();
-
-      delete crsf;
-      crsf = nullptr;
-
-      Serial.println("CRSF for Arduino initialisation failed!");
-      while (1)
-      {
-          delay(10);
-      }
+    channelHandlers[i] = defaultHandler; // Assign default handler
   }
 
-
-  crsf->setRcChannelsCallback(onReceiveRcChannels);
-
-  // Show the user that the sketch is ready.
-  Serial.println("RC Channels Example");
-  delay(1000);
-  Serial.println("Ready");
-  delay(1000);
+  // Set specific handlers for certain channels
+  channelHandlers[0] = handleChannel1; // C1x
+  channelHandlers[1] = handleChannel2; // C1y
+  channelHandlers[2] = handleChannel3; // C2x
+  channelHandlers[3] = handleChannel4; // C2y
+  channelHandlers[4] = handleChannel5; // Aux5
+  channelHandlers[5] = handleChannel6; // Aux6
+  channelHandlers[6] = handleChannel7; // Aux7
+  channelHandlers[7] = handleChannel8; // Aux8
+  channelHandlers[8] = handleChannel9; // Aux9
+  channelHandlers[9] = handleChannel10; // Aux10
+  channelHandlers[10] = handleChannel11; // Aux11
+  channelHandlers[11] = handleChannel12; // Aux12
 }
 
 void loop()
 {
-    crsf->update();
-    if (crsf->getChannel(6) > 1001){
-      digitalWrite(LEDPIN, LOW);
-    } else {
-      digitalWrite(LEDPIN, HIGH);
-    }
+  crsf.update(); // Call the update method directly
 }
 
 void onReceiveRcChannels(serialReceiverLayer::rcChannels_t *rcChannels)
 {
-    if (rcChannels->failsafe == false)
-    {
-        /* Print RC channels every 100 ms. */
-        unsigned long thisTime = millis();
-        static unsigned long lastTime = millis();
+  for (int i = 0; i < rcChannelCount; i++)
+  {
+    int channelValue = crsf.getChannel(i + 1); // CRSF channels are 1-based
+    channelHandlers[i](channelValue);         // Call the appropriate handler
+  }
+}
 
-        /* Compensate for millis() overflow. */
-        if (thisTime < lastTime)
-        {
-            lastTime = thisTime;
-        }
+// CHANNEL HANDLERS
+void defaultHandler(int value)
+{
 
-        if (thisTime - lastTime >= 100)
-        {
-            lastTime = thisTime;
+}
+void handleChannel1(int value)
+{
 
-            Serial.print("RC Channels <");
-            for (int i = 1; i <= rcChannelCount; i++)
-            {
-                Serial.print(rcChannelNames[i - 1]);
-                Serial.print(": ");
-                Serial.print(crsf->rcToUs(crsf->getChannel(i)));
+}
 
-                if (i < rcChannelCount)
-                {
-                    Serial.print(", ");
-                }
-            }
-            Serial.println(">");
-        }
-    }
+void handleChannel2(int value)
+{
+
+}
+
+void handleChannel3(int value)
+{
+
+}
+
+void handleChannel4(int value)
+{
+
+}
+
+void handleChannel5(int value)
+{
+
+}
+
+void handleChannel6(int value)
+{
+
+  if (value > 1001)
+  {
+    digitalWrite(LEDPIN, LOW);
+  }
+  else
+  {
+    digitalWrite(LEDPIN, HIGH);
+  }
+}
+
+void handleChannel7(int value)
+{
+
+}
+
+void handleChannel8(int value)
+{
+
+}
+
+void handleChannel9(int value)
+{
+
+}
+
+void handleChannel10(int value)
+{
+
+}
+
+void handleChannel11(int value)
+{
+
+}
+
+void handleChannel12(int value)
+{
+
 }
