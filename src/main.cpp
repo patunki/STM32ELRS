@@ -1,9 +1,12 @@
 #include <Arduino.h>
+#include <Servo.h>
 #include "CRSFforArduino.hpp"
 
 #define LEDPIN PC13
+#define SERVO1 PB13
 
-CRSFforArduino crsf; // Declare crsf as a regular object
+CRSFforArduino crsf;
+Servo servo1;
 
 const int rcChannelCount = 12;
 
@@ -24,6 +27,8 @@ void handleChannel10(int value);
 void handleChannel11(int value);
 void handleChannel12(int value);
 
+int mapToServo(int value);
+
 // Default handler for unhandled channels
 void defaultHandler(int value);
 
@@ -32,6 +37,8 @@ void onReceiveRcChannels(serialReceiverLayer::rcChannels_t *rcChannels);
 void setup()
 {
   pinMode(LEDPIN, OUTPUT);
+  Serial.begin(9600);
+  servo1.attach(SERVO1);
 
   // Initialise CRSF for Arduino
   if (!crsf.begin())
@@ -67,7 +74,7 @@ void setup()
 
 void loop()
 {
-  crsf.update(); // Call the update method directly
+  crsf.update();
 }
 
 void onReceiveRcChannels(serialReceiverLayer::rcChannels_t *rcChannels)
@@ -79,6 +86,12 @@ void onReceiveRcChannels(serialReceiverLayer::rcChannels_t *rcChannels)
   }
 }
 
+int mapToServo(int value){
+  int val = value;
+  val = map(val, 0, 2000, 0, 180);
+  return val;
+}
+
 // CHANNEL HANDLERS
 void defaultHandler(int value)
 {
@@ -86,7 +99,9 @@ void defaultHandler(int value)
 }
 void handleChannel1(int value)
 {
-
+  int val = mapToServo(value);
+  servo1.write(val);
+  delay(10);
 }
 
 void handleChannel2(int value)
